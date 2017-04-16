@@ -1,0 +1,33 @@
+buildscript {
+  repositories {
+    mavenLocal()
+    mavenCentral()
+  }
+}
+
+plugins {
+  id 'java'
+}
+
+group 'com.redhat.it'
+version '1.0.0-SNAPSHOT'
+sourceCompatibility = 1.8
+
+repositories {
+  mavenLocal()
+  mavenCentral()
+}
+
+// TODO: investigate using mavenBom and https://github.com/nebula-plugins/nebula-dependency-recommender-plugin
+configurations {
+  // check for updates every build
+  all {
+    resolutionStrategy {
+      cacheChangingModulesFor 0, 'seconds'
+    }
+  }
+}
+
+dependencies {
+  compile project(':api')
+}

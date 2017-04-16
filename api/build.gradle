@@ -1,0 +1,54 @@
+buildscript {
+  repositories {
+    mavenLocal()
+    mavenCentral()
+  }
+
+  dependencies {
+    classpath 'io.spring.gradle:dependency-management-plugin:1.0.2.RELEASE'
+  }
+}
+
+plugins {
+  id 'org.springframework.boot' version '1.5.2.RELEASE'
+  id 'java'
+}
+
+group 'com.redhat.it'
+version '1.0.0-SNAPSHOT'
+sourceCompatibility = 1.8
+
+repositories {
+  mavenLocal()
+  mavenCentral()
+  maven { url 'http://repository.jboss.org/nexus/content/groups/public-jboss/'}
+}
+
+def resteasyVersion = '3.1.2.Final'
+def springVersion = '4.3.7.RELEASE'
+def undertowVersion = '1.4.12.Final'
+def jacksonVersion = '2.7.8'
+def metricsVersion = '3.2.2'
+
+// TODO: investigate using mavenBom and https://github.com/nebula-plugins/nebula-dependency-recommender-plugin
+configurations {
+  // check for updates every build
+  all {
+    resolutionStrategy {
+      cacheChangingModulesFor 0, 'seconds'
+    }
+  }
+
+  compile.exclude module: 'spring-boot-starter-tomcat'
+}
+
+dependencies {
+  compile 'org.springframework.boot:spring-boot-starter-web'
+  compile 'org.springframework.boot:spring-boot-starter-undertow'
+  compile 'org.springframework.boot:spring-boot-starter-data-jpa'
+  compile 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+
+  runtime 'org.hsqldb:hsqldb'
+
+  testCompile 'org.springframework.boot:spring-boot-starter-test'
+}
