@@ -59,7 +59,11 @@ public class Application {
     @Override
     public void serialize(Stream value, JsonGenerator gen, SerializerProvider serializers)
         throws IOException, JsonProcessingException {
-      serializers.findValueSerializer(Iterator.class).serialize(value.iterator(), gen, serializers);
+      try (Stream stream = value) {
+        serializers
+            .findValueSerializer(Iterator.class)
+            .serialize(stream.iterator(), gen, serializers);
+      }
     }
   }
 }

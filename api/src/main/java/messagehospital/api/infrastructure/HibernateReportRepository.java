@@ -100,7 +100,7 @@ public class HibernateReportRepository implements ReportRepository {
 
     q.where(predicates.stream().toArray(Predicate[]::new));
 
-    return session.createQuery(q).stream().peek(r -> log.info("result: {}", r));
+    return session.createQuery(q).stream();
   }
 
   @Override

@@ -8,6 +8,8 @@ import javax.persistence.ElementCollection;
 import javax.persistence.Embedded;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
+import javax.persistence.Index;
+import javax.persistence.Table;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.HashMap;
@@ -16,7 +18,7 @@ import java.util.Set;
 
 @Entity
 @Immutable
-//@Table(indexes = {@Index(columnList = "correlation_id", unique = false)})
+@Table(indexes = {@Index(columnList = "correlationId", unique = false)})
 public class Report {
 
   @EmbeddedId
@@ -49,7 +51,7 @@ public class Report {
   private String data;
 
   /**
-   * As in exception causes and hierarchy.ww
+   * As in exception causes and hierarchy.
    */
   @ElementCollection
   private Set<String> errorTypes;
