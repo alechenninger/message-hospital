@@ -1,0 +1,1 @@
+package messagehospital.api.domain;
