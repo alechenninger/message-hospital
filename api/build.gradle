@@ -41,7 +41,7 @@ dependencies {
   compile 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
   compile 'org.hibernate:hibernate-core:5.2.10.Final'
 
-  runtime 'org.hsqldb:hsqldb'
+  compile 'org.hsqldb:hsqldb'
 
   testCompile 'org.springframework.boot:spring-boot-starter-test'
 }

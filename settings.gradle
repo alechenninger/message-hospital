@@ -1,4 +1,4 @@
-rootProject.name = 'qadmin2'
+rootProject.name = 'message-hospital'
 
 include 'api'
 include 'api-plugins'
