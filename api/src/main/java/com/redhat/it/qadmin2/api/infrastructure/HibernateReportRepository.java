@@ -22,6 +22,7 @@ import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -64,26 +65,41 @@ public class HibernateReportRepository implements ReportRepository {
     Session session = entityManager.unwrap(Session.class);
     CriteriaBuilder criteria = session.getCriteriaBuilder();
     CriteriaQuery<Report> q = criteria.createQuery(Report.class);
+
     Root<Report> root = q.from(Report.class);
-    MapJoin<Report, String, String> headerJoin = root.joinMap("headers", JoinType.LEFT);
     q.select(root);
+    q.distinct(true);
+
     List<Predicate> predicates = new ArrayList<>();
+
     if (!producers.isEmpty()) {
       predicates.add(root.get("producer").in(producers));
     }
+
     if (!types.isEmpty()) {
       predicates.add(root.get("messageType").in(types));
     }
-    if (!headerCombos.isEmpty()) {
-      Map<String, String> combo = headerCombos.iterator().next();
 
-      for (Map.Entry<String, String> entry : combo.entrySet()) {
-        predicates.add(criteria.and(
-            criteria.equal(headerJoin.key(), entry.getKey()),
-            criteria.equal(headerJoin.value(), entry.getValue())));
+    if (!headerCombos.isEmpty()) {
+      Predicate[] headerPredicates = new Predicate[headerCombos.size()];
+      int i = 0;
+
+      for (Iterator<Map<String, String>> it = headerCombos.iterator(); it.hasNext(); i++) {
+        Map<String, String> combo = it.next();
+
+        for (Map.Entry<String, String> entry : combo.entrySet()) {
+          MapJoin<Report, String, String> headerJoin = root.joinMap("headers", JoinType.LEFT);
+          headerPredicates[i] = criteria.and(
+              criteria.equal(headerJoin.key(), entry.getKey()),
+              criteria.equal(headerJoin.value(), entry.getValue()));
+        }
       }
+
+      predicates.add(criteria.or(headerPredicates));
     }
+
     q.where(predicates.stream().toArray(Predicate[]::new));
+
     return session.createQuery(q).stream().peek(r -> log.info("result: {}", r));
   }
 

@@ -7,6 +7,7 @@ import org.springframework.orm.jpa.persistenceunit.DefaultPersistenceUnitManager
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
+import javax.persistence.EntityTransaction;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -39,6 +40,32 @@ public class HibernateInMemoryDb extends ExternalResource {
     return new Reset(this);
   }
 
+  public void tx(TransactionScript script) throws Throwable {
+    EntityTransaction tx = entityManager.getTransaction();
+    tx.begin();
+    try {
+      script.run();
+      tx.commit();
+    } catch (Throwable t) {
+      tx.rollback();
+      throw t;
+    }
+  }
+
+  public <T> T tx(TransactionScriptWithResult<T> script) throws Throwable {
+    EntityTransaction tx = entityManager.getTransaction();
+    T answer;
+    tx.begin();
+    try {
+      answer = script.run();
+      tx.commit();
+    } catch (Throwable t) {
+      tx.rollback();
+      throw t;
+    }
+    return answer;
+  }
+
   @Override
   protected void before() throws Throwable {
     DefaultPersistenceUnitManager persistenceUnitManager = new DefaultPersistenceUnitManager();
@@ -60,6 +87,14 @@ public class HibernateInMemoryDb extends ExternalResource {
   @Override
   protected void after() {
     entityManagerFactory.close();
+  }
+
+  public interface TransactionScript {
+    void run() throws Throwable;
+  }
+
+  public interface TransactionScriptWithResult<T> {
+    T run() throws Throwable;
   }
 
   public static class Reset extends ExternalResource {

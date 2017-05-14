@@ -13,7 +13,6 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import javax.persistence.EntityManager;
-import javax.persistence.EntityTransaction;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
@@ -21,6 +20,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class HibernateReportRepositoryTest {
 
@@ -30,13 +30,11 @@ public class HibernateReportRepositoryTest {
   @Rule
   public HibernateInMemoryDb.Reset reset = db.resetRule();
 
-  @Test
-  public void searchesReportsByHeaders() {
-    EntityManager entityManager = db.entityManager();
-    HibernateReportRepository repository = new HibernateReportRepository(entityManager);
-    EntityTransaction tx = entityManager.getTransaction();
-    tx.begin();
+  EntityManager entityManager = db.entityManager();
+  HibernateReportRepository repository = new HibernateReportRepository(entityManager);
 
+  @Test
+  public void searchesReportsByHeadersInCombination() throws Throwable {
     Report report = new Report(
         repository.nextReportId(),
         new CorrelationId("123"),
@@ -57,22 +55,121 @@ public class HibernateReportRepositoryTest {
         "error detail"
     );
 
-    repository.save(report);
+    List<Report> results = db.tx(() -> {
+      repository.save(report);
 
-    tx.commit();
-    tx.begin();
+      return repository.search(
+          Collections.emptySet(), Collections.emptySet(), Collections.singleton(
+              new HashMap<String, String>() {{
+                put("header1", "value1");
+                put("header2", "value2");
+              }}),
+          0, 10).collect(Collectors.toList());
+    });
 
-    List<Report> resultList = repository.search(
-        Collections.emptySet(), Collections.emptySet(), Collections.singleton(
-            new HashMap<String, String>() {{
-              put("header1", "value1");
-              put("header2", "value2");
-            }}),
-        0, 10).collect(Collectors.toList());
+    assertEquals(1, results.size());
+    assertEquals(report.id(), results.get(0).id());
+  }
 
-    tx.commit();
+  @Test
+  public void searchReportRequiresAllHeadersInCombinationToMatch() throws Throwable {
+    Report report = new Report(
+        repository.nextReportId(),
+        new CorrelationId("123"),
+        Instant.now(),
+        "resubmit://foo",
+        new SystemName("sysA"),
+        "application/xml",
+        "<xml></xml>",
+        new HashMap<String, String>() {{
+          put("header1", "value1");
+          put("header2", "value2");
+        }},
+        new SystemName("sysProducer"),
+        new MessageType("user"),
+        "should this just be system",
+        new HashSet<>(Arrays.asList("IOException")),
+        "error msg",
+        "error detail"
+    );
 
-    assertEquals(1, resultList.size());
-    assertEquals(report.id(), resultList.get(0).id());
+    List<Report> results = db.tx(() -> {
+      repository.save(report);
+
+      return repository.search(
+          Collections.emptySet(), Collections.emptySet(), Collections.singleton(
+              new HashMap<String, String>() {{
+                put("header1", "value1");
+                put("header2", "not the right value");
+              }}),
+          0, 10).collect(Collectors.toList());
+    });
+
+    assertEquals(0, results.size());
+  }
+
+  @Test
+  public void searchesReportsForMultipleHeaderCombinations() throws Throwable {
+    Report report1 = new Report(
+        repository.nextReportId(),
+        new CorrelationId("123"),
+        Instant.now(),
+        "resubmit://foo",
+        new SystemName("sysA"),
+        "application/xml",
+        "<xml></xml>",
+        new HashMap<String, String>() {{
+          put("header1", "value1");
+          put("header2", "value2");
+        }},
+        new SystemName("sysProducer"),
+        new MessageType("user"),
+        "should this just be system",
+        new HashSet<>(Arrays.asList("IOException")),
+        "error msg",
+        "error detail"
+    );
+
+    Report report2 = new Report(
+        repository.nextReportId(),
+        new CorrelationId("123"),
+        Instant.now(),
+        "resubmit://foo",
+        new SystemName("sysA"),
+        "application/xml",
+        "<xml></xml>",
+        new HashMap<String, String>() {{
+          put("header3", "value3");
+          put("header4", "value4");
+        }},
+        new SystemName("sysProducer"),
+        new MessageType("user"),
+        "should this just be system",
+        new HashSet<>(Arrays.asList("IOException")),
+        "error msg",
+        "error detail"
+    );
+
+    List<Report> results = db.tx(() -> {
+      repository.save(report1);
+      repository.save(report2);
+
+      return repository.search(
+          Collections.emptySet(), Collections.emptySet(), Stream.of(
+              new HashMap<String, String>() {{
+                put("header1", "value1");
+                put("header2", "value2");
+              }},
+              new HashMap<String, String>() {{
+                put("header3", "value3");
+                put("header4", "value4");
+              }}).collect(Collectors.toSet()),
+          0, 10).collect(Collectors.toList());
+    });
+
+    assertEquals(2, results.size());
+    assertEquals(
+        Stream.of(report1.id(), report2.id()).collect(Collectors.toSet()),
+        results.stream().map(Report::id).collect(Collectors.toSet()));
   }
 }
