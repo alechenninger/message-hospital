@@ -82,23 +82,30 @@ public class HibernateReportRepository implements ReportRepository {
 
     if (!headerCombos.isEmpty()) {
       Predicate[] headerPredicates = new Predicate[headerCombos.size()];
-      int i = 0;
+      int comboIndex = 0;
 
-      for (Iterator<Map<String, String>> it = headerCombos.iterator(); it.hasNext(); i++) {
+      for (Iterator<Map<String, String>> it = headerCombos.iterator(); it.hasNext(); comboIndex++) {
         Map<String, String> combo = it.next();
+        Predicate[] comboPredicates = new Predicate[combo.size()];
+        int headerIndex = 0;
 
-        for (Map.Entry<String, String> entry : combo.entrySet()) {
+        for (Iterator<Map.Entry<String, String>> iterator = combo.entrySet().iterator();
+             iterator.hasNext();
+             headerIndex++) {
+          Map.Entry<String, String> entry = iterator.next();
           MapJoin<Report, String, String> headerJoin = root.joinMap("headers", JoinType.LEFT);
-          headerPredicates[i] = criteria.and(
+          comboPredicates[headerIndex] = criteria.and(
               criteria.equal(headerJoin.key(), entry.getKey()),
               criteria.equal(headerJoin.value(), entry.getValue()));
         }
+
+        headerPredicates[comboIndex] = criteria.and(comboPredicates);
       }
 
       predicates.add(criteria.or(headerPredicates));
     }
 
-    q.where(predicates.stream().toArray(Predicate[]::new));
+    q.where(predicates.toArray(new Predicate[predicates.size()]));
 
     return session.createQuery(q).stream();
   }

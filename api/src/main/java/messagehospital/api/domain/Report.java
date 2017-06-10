@@ -31,6 +31,31 @@ public class Report {
   private Instant timestamp;
 
   /** As in message broker and queue. */
+  /*
+  Other ways to think about this:
+
+  Protocol for possibly "fixing" and continuing a message.
+
+  So for example, might use HTTP with a particular URL pattern and schema.
+  Or might use JMS for a particular connection url and destination.
+
+  Inputs: message body, headers, correlation id, report id
+  Contract: Replays message.
+
+  It means a report must include a particular protocol for resubmit. Which means the app has to know
+  about that protocol. This is a source of coupling, so should be plugable. It could be fancy with
+  runtime configurations and templates and stuff but if its plugable that kind of thing could be
+  added whenever. Could consider including some amount of this on the report (for example URL and
+  body template). Then the app is very loosely coupled to how systems' resubmit may work at the cost
+  of probably lots of redundant data in reports.
+
+  Also think about security. Only certain roles should be able to resubmit certain messages. Who
+  knows about these business rules? Not the app. Reporter might. So reporter should probably include
+  roles in resubmit protocol. But again this is largely redundant info. What if roles change? Should
+  it really be per report? If configuration, than these rules also need to be plugable.
+
+  Plugable is really just another way of saying modular.
+  */
   private String resubmitUri;
 
   @Embedded

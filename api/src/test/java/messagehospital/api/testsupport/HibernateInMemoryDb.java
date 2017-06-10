@@ -72,7 +72,7 @@ public class HibernateInMemoryDb extends ExternalResource {
     dataSource = new JDBCDataSource();
     dataSource.setUrl("jdbc:hsqldb:mem:test");
     persistenceUnitManager.setDefaultDataSource(dataSource);
-    persistenceUnitManager.setPackagesToScan(packagesToScan /*"com.redhat.it.qadmin2.api"*/);
+    persistenceUnitManager.setPackagesToScan(packagesToScan);
     persistenceUnitManager.preparePersistenceUnitInfos();
     HibernatePersistenceProvider provider = new HibernatePersistenceProvider();
     entityManagerFactory = provider.createContainerEntityManagerFactory(

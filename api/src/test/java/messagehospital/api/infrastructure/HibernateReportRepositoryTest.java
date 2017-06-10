@@ -25,7 +25,7 @@ import java.util.stream.Stream;
 public class HibernateReportRepositoryTest {
 
   @ClassRule
-  public static HibernateInMemoryDb db = new HibernateInMemoryDb("com.redhat.it.qadmin2.api");
+  public static HibernateInMemoryDb db = new HibernateInMemoryDb("messagehospital.api");
 
   @Rule
   public HibernateInMemoryDb.Reset reset = db.resetRule();
