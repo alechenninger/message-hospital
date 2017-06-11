@@ -8,6 +8,7 @@ import messagehospital.api.domain.ReportRepository;
 import messagehospital.api.domain.SystemName;
 
 import org.hibernate.Session;
+import org.hibernate.query.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,13 +63,17 @@ public class HibernateReportRepository implements ReportRepository {
   @Override
   public Stream<Report> search(Set<SystemName> producers, Set<MessageType> types,
       Set<Map<String, String>> headerCombos, int index, int max) {
-    Session session = entityManager.unwrap(Session.class);
-    CriteriaBuilder criteria = session.getCriteriaBuilder();
-    CriteriaQuery<Report> q = criteria.createQuery(Report.class);
+    if (max == 0) {
+      return Stream.empty();
+    }
 
-    Root<Report> root = q.from(Report.class);
-    q.select(root);
-    q.distinct(true);
+    Session session = entityManager.unwrap(Session.class);
+    CriteriaBuilder builder = session.getCriteriaBuilder();
+    CriteriaQuery<Report> criteria = builder.createQuery(Report.class);
+
+    Root<Report> root = criteria.from(Report.class);
+    criteria.select(root);
+    criteria.distinct(true);
 
     List<Predicate> predicates = new ArrayList<>();
 
@@ -94,20 +99,24 @@ public class HibernateReportRepository implements ReportRepository {
              headerIndex++) {
           Map.Entry<String, String> entry = iterator.next();
           MapJoin<Report, String, String> headerJoin = root.joinMap("headers", JoinType.LEFT);
-          comboPredicates[headerIndex] = criteria.and(
-              criteria.equal(headerJoin.key(), entry.getKey()),
-              criteria.equal(headerJoin.value(), entry.getValue()));
+          comboPredicates[headerIndex] = builder.and(
+              builder.equal(headerJoin.key(), entry.getKey()),
+              builder.equal(headerJoin.value(), entry.getValue()));
         }
 
-        headerPredicates[comboIndex] = criteria.and(comboPredicates);
+        headerPredicates[comboIndex] = builder.and(comboPredicates);
       }
 
-      predicates.add(criteria.or(headerPredicates));
+      predicates.add(builder.or(headerPredicates));
     }
 
-    q.where(predicates.toArray(new Predicate[predicates.size()]));
+    criteria.where(predicates.toArray(new Predicate[predicates.size()]));
 
-    return session.createQuery(q).stream();
+    Query<Report> query = session.createQuery(criteria);
+    query.setMaxResults(max);
+    query.setFirstResult(index);
+
+    return query.stream();
   }
 
   @Override

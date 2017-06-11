@@ -12,7 +12,6 @@ public interface ReportRepository {
 
   Stream<Report> allReports();
 
-  // TODO: start index, max results
   Stream<Report> search(Set<SystemName> producers, Set<MessageType> types,
       Set<Map<String, String>> headers, int index, int max);
 

@@ -18,7 +18,7 @@ import java.util.Set;
 
 @Entity
 @Immutable
-@Table(indexes = {@Index(columnList = "correlationId", unique = false)})
+@Table(indexes = {@Index(columnList = "correlationId")})
 public class Report {
 
   @EmbeddedId
@@ -69,8 +69,6 @@ public class Report {
   @Embedded
   private MessageType messageType;
 
-  private String service;
-
   private String dataFormat;
 
   private String data;
@@ -91,7 +89,7 @@ public class Report {
   protected Report() {}
 
   public Report(ReportId id, CorrelationId correlationId, Instant timestamp, String resubmitUri, SystemName system,
-      String dataFormat, String data, Map<String, String> headers, SystemName producer, MessageType messageType, String service, Set<String> errorTypes, String errorMessage, String errorDetail) {
+      String dataFormat, String data, Map<String, String> headers, SystemName producer, MessageType messageType, Set<String> errorTypes, String errorMessage, String errorDetail) {
     this.correlationId = correlationId;
     this.id = id;
     this.timestamp = timestamp;
@@ -104,40 +102,68 @@ public class Report {
         : Collections.unmodifiableMap(new HashMap<>(headers));
     this.producer = producer;
     this.messageType = messageType;
-    this.service = service;
     this.errorTypes = errorTypes;
     this.errorMessage = errorMessage;
     this.errorDetail = errorDetail;
   }
 
+  /**
+   * Uniquely identifies the report.
+   */
   public ReportId id() {
     return id;
   }
 
+  /**
+   * Correlates this report with other reports that share the same correlation id. Reports correlate
+   * when they relate to the same business event or distributed transaction (for example a JMS
+   * message ID or an HTTP X-Correlation-ID header).
+   */
+  // TODO: Should be eventId?
   public CorrelationId correlationId() {
     return correlationId;
   }
 
+  // TODO: Rework this
   public String resubmitUri() {
     return resubmitUri;
   }
 
+  /**
+   * Identifies the best known origin system of the event represented by {@link #correlationId()}.
+   */
+  // or "publisher"? "sender"?
+  // should this just be a header?
   public SystemName producer() {
     return producer;
   }
 
+  /**
+   * Identifies the kind of origin event represented by {@link #correlationId()}, for example
+   * "UserCreated" or "PurchaseOrder."
+   */
+  // TODO: Message types plural?
+  // TODO: event name instead?
+  // should this just be a header?
   public MessageType messageType() {
     return messageType;
   }
 
-  public String service() {
-    return service;
+  // should this just be a header?
+  // consumer()?
+  public SystemName system() {
+    return system;
   }
 
+  /**
+   * A mime type for {@link #data()} such as "application/json" or
+   * "application/vnd.mycompany.user+xml".
+   */
   public String dataFormat() {
     return dataFormat;
   }
 
+  // TODO: Bundle all error values together?
   public Set<String> errorTypes() {
     return errorTypes;
   }
@@ -154,14 +180,15 @@ public class Report {
     return timestamp;
   }
 
-  public SystemName system() {
-    return system;
-  }
-
+  // TODO: Is all data textual? Encapsulate together with dataFormat? class Data { ... }
   public String data() {
     return data;
   }
 
+  /**
+   * Searchable metadata about the event and/or the report. Each header's key and value are expected
+   * to be small.
+   */
   public Map<String, String> headers() {
     return headers;
   }
@@ -176,7 +203,6 @@ public class Report {
         ", producer=" + producer +
         ", system=" + system +
         ", messageType=" + messageType +
-        ", service='" + service + '\'' +
         ", dataFormat='" + dataFormat + '\'' +
         ", data='" + data + '\'' +
         ", errorTypes=" + errorTypes +

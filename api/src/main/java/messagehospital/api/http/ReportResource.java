@@ -75,7 +75,7 @@ public class ReportResource {
         request.timestamp.toInstant(), request.resubmitUri,
         new SystemName(request.system), request.dataFormat, request.data,
         request.headers, new SystemName(request.producerSystem),
-        new MessageType(request.messageType), request.service,
+        new MessageType(request.messageType),
         new HashSet<>(request.errorTypes), request.errorMessage, request.errorDetail);
 
     repository.save(report);
@@ -190,8 +190,8 @@ public class ReportResource {
     public Collection<String> producers;
     public Collection<String> messageTypes;
     public Collection<Map<String, String>> headers;
-    public int index;
-    public int max;
+    public int index = 0;
+    public int max = 20;
 
     public SearchRequest producers(Collection<String> producers) {
       this.producers = producers;

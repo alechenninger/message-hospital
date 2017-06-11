@@ -49,7 +49,6 @@ public class HibernateReportRepositoryTest {
         }},
         new SystemName("sysProducer"),
         new MessageType("user"),
-        "should this just be system",
         new HashSet<>(Arrays.asList("IOException")),
         "error msg",
         "error detail"
@@ -87,7 +86,6 @@ public class HibernateReportRepositoryTest {
         }},
         new SystemName("sysProducer"),
         new MessageType("user"),
-        "should this just be system",
         new HashSet<>(Arrays.asList("IOException")),
         "error msg",
         "error detail"
@@ -124,7 +122,6 @@ public class HibernateReportRepositoryTest {
         }},
         new SystemName("sysProducer"),
         new MessageType("user"),
-        "should this just be system",
         new HashSet<>(Arrays.asList("IOException")),
         "error msg",
         "error detail"
@@ -144,7 +141,6 @@ public class HibernateReportRepositoryTest {
         }},
         new SystemName("sysProducer"),
         new MessageType("user"),
-        "should this just be system",
         new HashSet<>(Arrays.asList("IOException")),
         "error msg",
         "error detail"

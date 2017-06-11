@@ -58,11 +58,10 @@ public class Application {
   private static class StreamJsonSerializer extends JsonSerializer<Stream> {
     @Override
     public void serialize(Stream value, JsonGenerator gen, SerializerProvider serializers)
-        throws IOException, JsonProcessingException {
+        throws IOException {
       try (Stream stream = value) {
-        serializers
-            .findValueSerializer(Iterator.class)
-            .serialize(stream.iterator(), gen, serializers);
+        JsonSerializer<Object> serializer = serializers.findValueSerializer(Iterator.class);
+        serializer.serialize(stream.iterator(), gen, serializers);
       }
     }
   }
