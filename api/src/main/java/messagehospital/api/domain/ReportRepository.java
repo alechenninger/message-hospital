@@ -12,7 +12,7 @@ public interface ReportRepository {
 
   Stream<Report> allReports();
 
-  Stream<Report> search(Set<SystemName> producers, Set<MessageType> types,
+  Stream<Report> search(Set<ServiceName> producers, Set<MessageType> types,
       Set<Map<String, String>> headers, int index, int max);
 
   Set<String> headerNamesByType(MessageType type);

@@ -5,7 +5,7 @@ import static org.junit.Assert.assertEquals;
 import messagehospital.api.domain.CorrelationId;
 import messagehospital.api.domain.MessageType;
 import messagehospital.api.domain.Report;
-import messagehospital.api.domain.SystemName;
+import messagehospital.api.domain.ServiceName;
 import messagehospital.api.testsupport.HibernateInMemoryDb;
 
 import org.junit.ClassRule;
@@ -40,14 +40,14 @@ public class HibernateReportRepositoryTest {
         new CorrelationId("123"),
         Instant.now(),
         "resubmit://foo",
-        new SystemName("sysA"),
+        new ServiceName("sysA"),
         "application/xml",
         "<xml></xml>",
         new HashMap<String, String>() {{
           put("header1", "value1");
           put("header2", "value2");
         }},
-        new SystemName("sysProducer"),
+        new ServiceName("sysProducer"),
         new MessageType("user"),
         new HashSet<>(Arrays.asList("IOException")),
         "error msg",
@@ -77,14 +77,14 @@ public class HibernateReportRepositoryTest {
         new CorrelationId("123"),
         Instant.now(),
         "resubmit://foo",
-        new SystemName("sysA"),
+        new ServiceName("sysA"),
         "application/xml",
         "<xml></xml>",
         new HashMap<String, String>() {{
           put("header1", "value1");
           put("header2", "value2");
         }},
-        new SystemName("sysProducer"),
+        new ServiceName("sysProducer"),
         new MessageType("user"),
         new HashSet<>(Arrays.asList("IOException")),
         "error msg",
@@ -113,14 +113,14 @@ public class HibernateReportRepositoryTest {
         new CorrelationId("123"),
         Instant.now(),
         "resubmit://foo",
-        new SystemName("sysA"),
+        new ServiceName("sysA"),
         "application/xml",
         "<xml></xml>",
         new HashMap<String, String>() {{
           put("header1", "value1");
           put("header2", "value2");
         }},
-        new SystemName("sysProducer"),
+        new ServiceName("sysProducer"),
         new MessageType("user"),
         new HashSet<>(Arrays.asList("IOException")),
         "error msg",
@@ -132,14 +132,14 @@ public class HibernateReportRepositoryTest {
         new CorrelationId("123"),
         Instant.now(),
         "resubmit://foo",
-        new SystemName("sysA"),
+        new ServiceName("sysA"),
         "application/xml",
         "<xml></xml>",
         new HashMap<String, String>() {{
           put("header3", "value3");
           put("header4", "value4");
         }},
-        new SystemName("sysProducer"),
+        new ServiceName("sysProducer"),
         new MessageType("user"),
         new HashSet<>(Arrays.asList("IOException")),
         "error msg",

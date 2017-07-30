@@ -2,7 +2,7 @@ package messagehospital.api.application;
 
 import messagehospital.api.domain.Producer;
 import messagehospital.api.domain.Producers;
-import messagehospital.api.domain.SystemName;
+import messagehospital.api.domain.ServiceName;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,7 +17,7 @@ public class PluginConfiguration {
   @Bean
   public Producers producersOnClasspath() {
     ServiceLoader<Producer> loader = ServiceLoader.load(Producer.class);
-    Map<SystemName, Producer> producers = new LinkedHashMap<>();
+    Map<ServiceName, Producer> producers = new LinkedHashMap<>();
     for (Producer producer : loader) {
       producers.put(producer.name(), producer);
     }

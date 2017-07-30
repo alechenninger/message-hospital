@@ -4,12 +4,12 @@ import javax.persistence.Embeddable;
 import java.util.Objects;
 
 @Embeddable
-public class SystemName {
+public class ServiceName {
   private String name;
 
-  protected SystemName() {}
+  protected ServiceName() {}
 
-  public SystemName(String name) {
+  public ServiceName(String name) {
     this.name = name;
   }
 
@@ -22,7 +22,7 @@ public class SystemName {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    SystemName that = (SystemName) o;
+    ServiceName that = (ServiceName) o;
     return Objects.equals(name, that.name);
   }
 

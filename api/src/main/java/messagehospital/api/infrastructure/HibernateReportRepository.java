@@ -5,7 +5,7 @@ import messagehospital.api.domain.MessageType;
 import messagehospital.api.domain.Report;
 import messagehospital.api.domain.ReportId;
 import messagehospital.api.domain.ReportRepository;
-import messagehospital.api.domain.SystemName;
+import messagehospital.api.domain.ServiceName;
 
 import org.hibernate.Session;
 import org.hibernate.query.Query;
@@ -61,7 +61,7 @@ public class HibernateReportRepository implements ReportRepository {
   }
 
   @Override
-  public Stream<Report> search(Set<SystemName> producers, Set<MessageType> types,
+  public Stream<Report> search(Set<ServiceName> producers, Set<MessageType> types,
       Set<Map<String, String>> headerCombos, int index, int max) {
     if (max == 0) {
       return Stream.empty();

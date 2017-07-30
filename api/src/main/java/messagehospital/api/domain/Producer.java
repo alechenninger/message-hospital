@@ -3,6 +3,6 @@ package messagehospital.api.domain;
 import java.util.Set;
 
 public interface Producer {
-  SystemName name();
+  ServiceName name();
   Set<SyncService> syncServices();
 }

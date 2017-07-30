@@ -4,17 +4,17 @@ import java.util.Map;
 import java.util.Set;
 
 public class Producers {
-  private final Map<SystemName, Producer> producers;
+  private final Map<ServiceName, Producer> producers;
 
-  public Producers(Map<SystemName, Producer> producers) {
+  public Producers(Map<ServiceName, Producer> producers) {
     this.producers = producers;
   }
 
-  public Set<SystemName> producers() {
+  public Set<ServiceName> producers() {
     return producers.keySet();
   }
 
-  public Producer byName(SystemName name) {
+  public Producer byName(ServiceName name) {
     return producers.get(name);
   }
 }

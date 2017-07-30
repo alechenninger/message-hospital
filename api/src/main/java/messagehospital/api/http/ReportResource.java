@@ -5,7 +5,7 @@ import messagehospital.api.domain.MessageType;
 import messagehospital.api.domain.Report;
 import messagehospital.api.domain.ReportId;
 import messagehospital.api.domain.ReportRepository;
-import messagehospital.api.domain.SystemName;
+import messagehospital.api.domain.ServiceName;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import org.slf4j.Logger;
@@ -49,8 +49,8 @@ public class ReportResource {
 
   @PostMapping("/search")
   public ResponseEntity<Stream<ReportDto>> search(@RequestBody SearchRequest request) {
-    Set<SystemName> producers = request.producers.stream()
-        .map(SystemName::new)
+    Set<ServiceName> producers = request.producers.stream()
+        .map(ServiceName::new)
         .collect(Collectors.toSet());
 
     Set<MessageType> messageTypes = request.messageTypes.stream()
@@ -73,8 +73,8 @@ public class ReportResource {
 
     Report report = new Report(id, new CorrelationId(request.correlationId),
         request.timestamp.toInstant(), request.resubmitUri,
-        new SystemName(request.system), request.dataFormat, request.data,
-        request.headers, new SystemName(request.producerSystem),
+        new ServiceName(request.system), request.dataFormat, request.data,
+        request.headers, new ServiceName(request.producerSystem),
         new MessageType(request.messageType),
         new HashSet<>(request.errorTypes), request.errorMessage, request.errorDetail);
 

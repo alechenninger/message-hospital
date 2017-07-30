@@ -1,6 +1,7 @@
 package messagehospital.api.domain;
 
 import org.hibernate.annotations.Immutable;
+import org.springframework.util.MimeType;
 
 import javax.persistence.AttributeOverride;
 import javax.persistence.Column;
@@ -13,6 +14,7 @@ import javax.persistence.Table;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -60,11 +62,11 @@ public class Report {
 
   @Embedded
   @AttributeOverride(name = "name", column = @Column(name = "producerSystem"))
-  private SystemName producer;
+  private ServiceName producer;
 
   @Embedded
   @AttributeOverride(name = "name", column = @Column(name = "system"))
-  private SystemName system;
+  private ServiceName system;
 
   @Embedded
   private MessageType messageType;
@@ -88,8 +90,8 @@ public class Report {
 
   protected Report() {}
 
-  public Report(ReportId id, CorrelationId correlationId, Instant timestamp, String resubmitUri, SystemName system,
-      String dataFormat, String data, Map<String, String> headers, SystemName producer, MessageType messageType, Set<String> errorTypes, String errorMessage, String errorDetail) {
+  public Report(ReportId id, CorrelationId correlationId, Instant timestamp, String resubmitUri, ServiceName system,
+      String dataFormat, String data, Map<String, String> headers, ServiceName producer, MessageType messageType, Set<String> errorTypes, String errorMessage, String errorDetail) {
     this.correlationId = correlationId;
     this.id = id;
     this.timestamp = timestamp;
@@ -134,7 +136,7 @@ public class Report {
    */
   // or "publisher"? "sender"?
   // should this just be a header?
-  public SystemName producer() {
+  public ServiceName producer() {
     return producer;
   }
 
@@ -151,7 +153,7 @@ public class Report {
 
   // should this just be a header?
   // consumer()?
-  public SystemName system() {
+  public ServiceName system() {
     return system;
   }
 
@@ -210,5 +212,31 @@ public class Report {
         ", errorDetail='" + errorDetail + '\'' +
         ", headers=" + headers +
         '}';
+  }
+
+  public static class Message {
+    private MessageType type;
+    private Data data;
+    private ServiceName producer;
+
+    public static class Data {
+      private String mimeType;
+      private byte[] data;
+
+      public MimeType mimeType() {
+        return MimeType.valueOf(mimeType);
+      }
+
+      public byte[] data() {
+        return data;
+      }
+    }
+  }
+
+  public static class Exception {
+    private List<String> typeHierarchy;
+    private String shortMessage;
+    private String longMessage;
+    private Instant timestamp;
   }
 }
