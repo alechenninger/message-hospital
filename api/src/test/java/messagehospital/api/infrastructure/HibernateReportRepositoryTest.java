@@ -91,17 +91,17 @@ public class HibernateReportRepositoryTest {
         "error detail"
     );
 
-    List<Report> results = db.tx(() -> {
-      repository.save(report);
+    db.tx(() -> repository.save(report));
 
-      return repository.search(
-          Collections.emptySet(), Collections.emptySet(), Collections.singleton(
-              new HashMap<String, String>() {{
-                put("header1", "value1");
-                put("header2", "not the right value");
-              }}),
-          0, 10).collect(Collectors.toList());
-    });
+    List<Report> results = repository.search(
+        Collections.emptySet(),
+        Collections.emptySet(),
+        Collections.singleton(new HashMap<String, String>() {{
+          put("header1", "value1");
+          put("header2", "not the right value");
+        }}),
+        0, 10)
+        .collect(Collectors.toList());
 
     assertEquals(0, results.size());
   }

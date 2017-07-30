@@ -59,7 +59,7 @@ public class ReportResource {
 
     Set<Map<String, String>> headers = request.headers == null
         ? Collections.emptySet()
-        : request.headers.stream().collect(Collectors.toSet());
+        : new HashSet<>(request.headers);
 
     return ResponseEntity.ok(repository
         .search(producers, messageTypes, headers, request.index, request.max)
