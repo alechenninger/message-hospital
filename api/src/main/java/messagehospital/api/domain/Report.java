@@ -6,107 +6,47 @@ import org.springframework.util.MimeType;
 import javax.persistence.AttributeOverride;
 import javax.persistence.Column;
 import javax.persistence.ElementCollection;
+import javax.persistence.Embeddable;
 import javax.persistence.Embedded;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 import javax.persistence.Index;
 import javax.persistence.Table;
+import java.nio.charset.Charset;
 import java.time.Instant;
-import java.util.Collections;
-import java.util.HashMap;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.Objects;
 
 @Entity
 @Immutable
-@Table(indexes = {@Index(columnList = "correlationId")})
 public class Report {
 
   @EmbeddedId
   private ReportId id;
 
-  @Embedded
-  @AttributeOverride(name = "rawId", column = @Column(name = "correlationId"))
-  private CorrelationId correlationId;
-
   private Instant timestamp;
 
-  /** As in message broker and queue. */
-  /*
-  Other ways to think about this:
-
-  Protocol for possibly "fixing" and continuing a message.
-
-  So for example, might use HTTP with a particular URL pattern and schema.
-  Or might use JMS for a particular connection url and destination.
-
-  Inputs: message body, headers, correlation id, report id
-  Contract: Replays message.
-
-  It means a report must include a particular protocol for resubmit. Which means the app has to know
-  about that protocol. This is a source of coupling, so should be plugable. It could be fancy with
-  runtime configurations and templates and stuff but if its plugable that kind of thing could be
-  added whenever. Could consider including some amount of this on the report (for example URL and
-  body template). Then the app is very loosely coupled to how systems' resubmit may work at the cost
-  of probably lots of redundant data in reports.
-
-  Also think about security. Only certain roles should be able to resubmit certain messages. Who
-  knows about these business rules? Not the app. Reporter might. So reporter should probably include
-  roles in resubmit protocol. But again this is largely redundant info. What if roles change? Should
-  it really be per report? If configuration, than these rules also need to be plugable.
-
-  Plugable is really just another way of saying modular.
-  */
-  private String resubmitUri;
+  @Embedded
+  @AttributeOverride(name = "name", column = @Column(name = "consumer"))
+  private ServiceName consumer;
 
   @Embedded
-  @AttributeOverride(name = "name", column = @Column(name = "producerSystem"))
-  private ServiceName producer;
+  private Message message;
 
   @Embedded
-  @AttributeOverride(name = "name", column = @Column(name = "system"))
-  private ServiceName system;
-
-  @Embedded
-  private MessageType messageType;
-
-  private String dataFormat;
-
-  private String data;
-
-  /**
-   * As in exception causes and hierarchy.
-   */
-  @ElementCollection
-  private Set<String> errorTypes;
-
-  private String errorMessage;
-
-  private String errorDetail;
-
-  @ElementCollection
-  private Map<String, String> headers;
+  private Exception exception;
 
   protected Report() {}
 
-  public Report(ReportId id, CorrelationId correlationId, Instant timestamp, String resubmitUri, ServiceName system,
-      String dataFormat, String data, Map<String, String> headers, ServiceName producer, MessageType messageType, Set<String> errorTypes, String errorMessage, String errorDetail) {
-    this.correlationId = correlationId;
+  public Report(ReportId id, Instant timestamp, ServiceName consumer, Message message,
+      Exception exception) {
     this.id = id;
     this.timestamp = timestamp;
-    this.resubmitUri = resubmitUri;
-    this.system = system;
-    this.dataFormat = dataFormat;
-    this.data = data;
-    this.headers = headers == null || headers.isEmpty()
-        ? Collections.emptyMap()
-        : Collections.unmodifiableMap(new HashMap<>(headers));
-    this.producer = producer;
-    this.messageType = messageType;
-    this.errorTypes = errorTypes;
-    this.errorMessage = errorMessage;
-    this.errorDetail = errorDetail;
+    this.consumer = consumer;
+    this.message = message;
+    this.exception = exception;
   }
 
   /**
@@ -116,112 +56,116 @@ public class Report {
     return id;
   }
 
-  /**
-   * Correlates this report with other reports that share the same correlation id. Reports correlate
-   * when they relate to the same business event or distributed transaction (for example a JMS
-   * message ID or an HTTP X-Correlation-ID header).
-   */
-  // TODO: Should be eventId?
-  public CorrelationId correlationId() {
-    return correlationId;
-  }
-
-  // TODO: Rework this
-  public String resubmitUri() {
-    return resubmitUri;
-  }
-
-  /**
-   * Identifies the best known origin system of the event represented by {@link #correlationId()}.
-   */
-  // or "publisher"? "sender"?
-  // should this just be a header?
-  public ServiceName producer() {
-    return producer;
-  }
-
-  /**
-   * Identifies the kind of origin event represented by {@link #correlationId()}, for example
-   * "UserCreated" or "PurchaseOrder."
-   */
-  // TODO: Message types plural?
-  // TODO: event name instead?
-  // should this just be a header?
-  public MessageType messageType() {
-    return messageType;
-  }
-
-  // should this just be a header?
-  // consumer()?
-  public ServiceName system() {
-    return system;
-  }
-
-  /**
-   * A mime type for {@link #data()} such as "application/json" or
-   * "application/vnd.mycompany.user+xml".
-   */
-  public String dataFormat() {
-    return dataFormat;
-  }
-
-  // TODO: Bundle all error values together?
-  public Set<String> errorTypes() {
-    return errorTypes;
-  }
-
-  public String errorMessage() {
-    return errorMessage;
-  }
-
-  public String errorDetail() {
-    return errorDetail;
+  public ServiceName consumer() {
+    return consumer;
   }
 
   public Instant timestamp() {
     return timestamp;
   }
 
-  // TODO: Is all data textual? Encapsulate together with dataFormat? class Data { ... }
-  public String data() {
-    return data;
+  public Message message() {
+    return message;
   }
 
-  /**
-   * Searchable metadata about the event and/or the report. Each header's key and value are expected
-   * to be small.
-   */
-  public Map<String, String> headers() {
-    return headers;
+  public Exception exception() {
+    return exception;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    Report report = (Report) o;
+    return Objects.equals(id, report.id) &&
+        Objects.equals(timestamp, report.timestamp) &&
+        Objects.equals(consumer, report.consumer) &&
+        Objects.equals(message, report.message) &&
+        Objects.equals(exception, report.exception);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(id);
   }
 
   @Override
   public String toString() {
     return "Report{" +
         "id=" + id +
-        ", correlationId=" + correlationId +
         ", timestamp=" + timestamp +
-        ", resubmitUri='" + resubmitUri + '\'' +
-        ", producer=" + producer +
-        ", system=" + system +
-        ", messageType=" + messageType +
-        ", dataFormat='" + dataFormat + '\'' +
-        ", data='" + data + '\'' +
-        ", errorTypes=" + errorTypes +
-        ", errorMessage='" + errorMessage + '\'' +
-        ", errorDetail='" + errorDetail + '\'' +
-        ", headers=" + headers +
+        ", consumer=" + consumer +
+        ", message=" + message +
+        ", exception=" + exception +
         '}';
   }
 
+  @Embeddable
   public static class Message {
-    private MessageType type;
-    private Data data;
-    private ServiceName producer;
 
+    @Embedded
+    @AttributeOverride(name = "name", column = @Column(name = "type"))
+    private MessageType type;
+    @Embedded
+    private Data data;
+    @ElementCollection
+    private Map<String, String> headers;
+
+    protected Message() {}
+
+    public Message(MessageType type, Data data, Map<String, String> headers) {
+      this.type = type;
+      this.data = data;
+      this.headers = headers;
+    }
+
+    public MessageType type() {
+      return type;
+    }
+
+    public Data data() {
+      return data;
+    }
+
+    public Map<String, String> headers() {
+      return headers;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      Message message = (Message) o;
+      return Objects.equals(type, message.type) &&
+          Objects.equals(data, message.data) &&
+          Objects.equals(headers, message.headers);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(type, data, headers);
+    }
+
+    @Override
+    public String toString() {
+      return "Message{" +
+          "type=" + type +
+          ", data=" + data +
+          ", headers=" + headers +
+          '}';
+    }
+
+    @Embeddable
     public static class Data {
       private String mimeType;
       private byte[] data;
+
+      protected Data() {}
+
+      public Data(String mimeType, byte[] data) {
+        this.mimeType = mimeType;
+        this.data = data;
+      }
 
       public MimeType mimeType() {
         return MimeType.valueOf(mimeType);
@@ -230,13 +174,85 @@ public class Report {
       public byte[] data() {
         return data;
       }
+
+      public String dataAsUtf8() {
+        return new String(data, Charset.forName("UTF-8"));
+      }
+
+      @Override
+      public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Data data1 = (Data) o;
+        return Objects.equals(mimeType, data1.mimeType) &&
+            Arrays.equals(data, data1.data);
+      }
+
+      @Override
+      public int hashCode() {
+        return Objects.hash(mimeType, data);
+      }
+
+      @Override
+      public String toString() {
+        return "Data{" +
+            "mimeType='" + mimeType + '\'' +
+            ", data=" + Arrays.toString(data) +
+            ", dataAsUtf8='" + dataAsUtf8() + '\'' +
+            '}';
+      }
     }
   }
 
+  @Embeddable
   public static class Exception {
+    @ElementCollection
     private List<String> typeHierarchy;
     private String shortMessage;
     private String longMessage;
-    private Instant timestamp;
+
+    protected Exception() {}
+
+    public Exception(List<String> typeHierarchy, String shortMessage, String longMessage) {
+      this.typeHierarchy = typeHierarchy;
+      this.shortMessage = shortMessage;
+      this.longMessage = longMessage;
+    }
+
+    public List<String> typeHierarchy() {
+      return typeHierarchy;
+    }
+
+    public String shortMessage() {
+      return shortMessage;
+    }
+
+    public String longMessage() {
+      return longMessage;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      Exception exception = (Exception) o;
+      return Objects.equals(typeHierarchy, exception.typeHierarchy) &&
+          Objects.equals(shortMessage, exception.shortMessage) &&
+          Objects.equals(longMessage, exception.longMessage);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(typeHierarchy, shortMessage, longMessage);
+    }
+
+    @Override
+    public String toString() {
+      return "Exception{" +
+          "typeHierarchy=" + typeHierarchy +
+          ", shortMessage='" + shortMessage + '\'' +
+          ", longMessage='" + longMessage + '\'' +
+          '}';
+    }
   }
 }

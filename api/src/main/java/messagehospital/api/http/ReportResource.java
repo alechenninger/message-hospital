@@ -19,8 +19,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.UnsupportedEncodingException;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -68,15 +71,20 @@ public class ReportResource {
 
   @PostMapping
   @Transactional
-  public ResponseEntity<ReportIdDto> report(@RequestBody ReportRequest request) {
+  public ResponseEntity<ReportIdDto> report(@RequestBody ReportRequest request) throws UnsupportedEncodingException {
     ReportId id = repository.nextReportId();
 
-    Report report = new Report(id, new CorrelationId(request.correlationId),
-        request.timestamp.toInstant(), request.resubmitUri,
-        new ServiceName(request.system), request.dataFormat, request.data,
-        request.headers, new ServiceName(request.producerSystem),
-        new MessageType(request.messageType),
-        new HashSet<>(request.errorTypes), request.errorMessage, request.errorDetail);
+    Report report = new Report(id,
+        request.timestamp.toInstant(),
+        new ServiceName(request.system),
+        new Report.Message(
+            new MessageType(request.messageType),
+            new Report.Message.Data(request.dataFormat, request.data.getBytes("UTF-8")),
+            request.headers),
+        new Report.Exception(
+            new ArrayList<>(request.errorTypes),
+            request.errorMessage,
+            request.errorDetail));
 
     repository.save(report);
 
@@ -85,31 +93,17 @@ public class ReportResource {
 
   @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
   public static class ReportRequest {
-    public String correlationId;
     public OffsetDateTime timestamp;
-    public String resubmitUri;
     public String messageType;
     public String data;
     public Map<String, String> headers;
-    public String producerSystem;
     public String dataFormat;
     public String system;
-    public String service;
     public Collection<String> errorTypes;
     public String errorMessage;
 
-    public ReportRequest correlationId(String correlationId) {
-      this.correlationId = correlationId;
-      return this;
-    }
-
     public ReportRequest timestamp(OffsetDateTime timestamp) {
       this.timestamp = timestamp;
-      return this;
-    }
-
-    public ReportRequest resubmitUri(String resubmitUri) {
-      this.resubmitUri = resubmitUri;
       return this;
     }
 
@@ -128,11 +122,6 @@ public class ReportResource {
       return this;
     }
 
-    public ReportRequest producerSystem(String producerSystem) {
-      this.producerSystem = producerSystem;
-      return this;
-    }
-
     public ReportRequest dataFormat(String dataFormat) {
       this.dataFormat = dataFormat;
       return this;
@@ -140,11 +129,6 @@ public class ReportResource {
 
     public ReportRequest system(String system) {
       this.system = system;
-      return this;
-    }
-
-    public ReportRequest service(String service) {
-      this.service = service;
       return this;
     }
 
@@ -168,16 +152,12 @@ public class ReportResource {
     @Override
     public String toString() {
       return "ReportRequest{" +
-          "correlationId='" + correlationId + '\'' +
           ", timestamp=" + timestamp +
-          ", resubmitUri='" + resubmitUri + '\'' +
           ", messageType='" + messageType + '\'' +
           ", data='" + data + '\'' +
           ", headers=" + headers +
-          ", producerSystem='" + producerSystem + '\'' +
           ", dataFormat='" + dataFormat + '\'' +
           ", system='" + system + '\'' +
-          ", service='" + service + '\'' +
           ", errorTypes=" + errorTypes +
           ", errorMessage='" + errorMessage + '\'' +
           ", errorDetail='" + errorDetail + '\'' +
@@ -222,10 +202,7 @@ public class ReportResource {
   @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
   public static class ReportDto {
     public String id;
-    public String correlationId;
     public OffsetDateTime timestamp;
-    public String resubmitUri;
-    public String producerSystem;
     public String system;
     public String messageType;
     public String dataFormat;
@@ -239,28 +216,22 @@ public class ReportResource {
 
     ReportDto(Report report, ZoneOffset zone) {
       id = report.id().toString();
-      correlationId = report.correlationId().toString();
       timestamp = report.timestamp().atOffset(zone);
-      resubmitUri = report.resubmitUri();
-      producerSystem = Objects.toString(report.producer(), null);
-      system = Objects.toString(report.system(), null);
-      messageType = Objects.toString(report.messageType(), null);
-      dataFormat = report.dataFormat();
-      data = report.data();
-      errorTypes = report.errorTypes();
-      errorMessage = report.errorMessage();
-      errorDetail = report.errorDetail();
-      headers = report.headers();
+      system = Objects.toString(report.consumer(), null);
+      messageType = Objects.toString(report.message().type(), null);
+      dataFormat = Objects.toString(report.message().data().mimeType(), null);
+      data = report.message().data().dataAsUtf8();
+      errorTypes = report.exception().typeHierarchy();
+      errorMessage = report.exception().shortMessage();
+      errorDetail = report.exception().longMessage();
+      headers = report.message().headers();
     }
 
     @Override
     public String toString() {
       return "ReportDto{" +
           "id='" + id + '\'' +
-          ", correlationId='" + correlationId + '\'' +
           ", timestamp=" + timestamp +
-          ", resubmitUri='" + resubmitUri + '\'' +
-          ", producerSystem='" + producerSystem + '\'' +
           ", system='" + system + '\'' +
           ", messageType='" + messageType + '\'' +
           ", dataFormat='" + dataFormat + '\'' +

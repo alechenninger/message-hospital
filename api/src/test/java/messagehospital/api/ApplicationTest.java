@@ -31,11 +31,9 @@ public class ApplicationTest {
   public void reportAndSearch() {
     ResponseEntity<ReportResource.ReportDto> response = restTemplate.postForEntity("/reports",
         new ReportResource.ReportRequest()
-            .correlationId("100")
             .data("<xml></xml>")
             .dataFormat("application/xml")
             .timestamp(OffsetDateTime.now())
-            .producerSystem("test")
             .messageType("customer")
             .errorTypes(Arrays.asList("exception"))
             .headers(Stream.<String[]>of(

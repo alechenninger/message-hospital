@@ -37,22 +37,21 @@ public class HibernateReportRepositoryTest {
   public void searchesReportsByHeadersInCombination() throws Throwable {
     Report report = new Report(
         repository.nextReportId(),
-        new CorrelationId("123"),
         Instant.now(),
-        "resubmit://foo",
         new ServiceName("sysA"),
-        "application/xml",
-        "<xml></xml>",
-        new HashMap<String, String>() {{
-          put("header1", "value1");
-          put("header2", "value2");
-        }},
-        new ServiceName("sysProducer"),
-        new MessageType("user"),
-        new HashSet<>(Arrays.asList("IOException")),
-        "error msg",
-        "error detail"
-    );
+        new Report.Message(
+            new MessageType("user"),
+            new Report.Message.Data(
+                "application/xml",
+                "<message></message>".getBytes()),
+            new HashMap<String, String>() {{
+              put("header1", "value1");
+              put("header2", "value2");
+            }}),
+        new Report.Exception(
+            Arrays.asList("IOException"),
+            "error msg",
+            "error detail"));
 
     List<Report> results = db.tx(() -> {
       repository.save(report);
@@ -74,22 +73,21 @@ public class HibernateReportRepositoryTest {
   public void searchReportRequiresAllHeadersInCombinationToMatch() throws Throwable {
     Report report = new Report(
         repository.nextReportId(),
-        new CorrelationId("123"),
         Instant.now(),
-        "resubmit://foo",
         new ServiceName("sysA"),
-        "application/xml",
-        "<xml></xml>",
-        new HashMap<String, String>() {{
-          put("header1", "value1");
-          put("header2", "value2");
-        }},
-        new ServiceName("sysProducer"),
-        new MessageType("user"),
-        new HashSet<>(Arrays.asList("IOException")),
-        "error msg",
-        "error detail"
-    );
+        new Report.Message(
+            new MessageType("user"),
+            new Report.Message.Data(
+                "application/xml",
+                "<message></message>".getBytes()),
+            new HashMap<String, String>() {{
+              put("header1", "value1");
+              put("header2", "value2");
+            }}),
+        new Report.Exception(
+            Arrays.asList("IOException"),
+            "error msg",
+            "error detail"));
 
     db.tx(() -> repository.save(report));
 
@@ -110,41 +108,39 @@ public class HibernateReportRepositoryTest {
   public void searchesReportsForMultipleHeaderCombinations() throws Throwable {
     Report report1 = new Report(
         repository.nextReportId(),
-        new CorrelationId("123"),
         Instant.now(),
-        "resubmit://foo",
         new ServiceName("sysA"),
-        "application/xml",
-        "<xml></xml>",
-        new HashMap<String, String>() {{
-          put("header1", "value1");
-          put("header2", "value2");
-        }},
-        new ServiceName("sysProducer"),
-        new MessageType("user"),
-        new HashSet<>(Arrays.asList("IOException")),
-        "error msg",
-        "error detail"
-    );
+        new Report.Message(
+            new MessageType("user"),
+            new Report.Message.Data(
+                "application/xml",
+                "<message></message>".getBytes()),
+            new HashMap<String, String>() {{
+              put("header1", "value1");
+              put("header2", "value2");
+            }}),
+        new Report.Exception(
+            Arrays.asList("IOException"),
+            "error msg",
+            "error detail"));
 
     Report report2 = new Report(
         repository.nextReportId(),
-        new CorrelationId("123"),
         Instant.now(),
-        "resubmit://foo",
         new ServiceName("sysA"),
-        "application/xml",
-        "<xml></xml>",
-        new HashMap<String, String>() {{
-          put("header3", "value3");
-          put("header4", "value4");
-        }},
-        new ServiceName("sysProducer"),
-        new MessageType("user"),
-        new HashSet<>(Arrays.asList("IOException")),
-        "error msg",
-        "error detail"
-    );
+        new Report.Message(
+            new MessageType("user"),
+            new Report.Message.Data(
+                "application/xml",
+                "<message></message>".getBytes()),
+            new HashMap<String, String>() {{
+              put("header3", "value3");
+              put("header4", "value4");
+            }}),
+        new Report.Exception(
+            Arrays.asList("IOException"),
+            "error msg",
+            "error detail"));
 
     List<Report> results = db.tx(() -> {
       repository.save(report1);

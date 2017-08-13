@@ -19,6 +19,7 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.JoinType;
 import javax.persistence.criteria.MapJoin;
+import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import java.time.Instant;
@@ -61,7 +62,7 @@ public class HibernateReportRepository implements ReportRepository {
   }
 
   @Override
-  public Stream<Report> search(Set<ServiceName> producers, Set<MessageType> types,
+  public Stream<Report> search(Set<ServiceName> consumers, Set<MessageType> types,
       Set<Map<String, String>> headerCombos, int index, int max) {
     if (max == 0) {
       return Stream.empty();
@@ -77,12 +78,12 @@ public class HibernateReportRepository implements ReportRepository {
 
     List<Predicate> predicates = new ArrayList<>();
 
-    if (!producers.isEmpty()) {
-      predicates.add(root.get("producer").in(producers));
+    if (!consumers.isEmpty()) {
+      predicates.add(root.get("consumer").in(consumers));
     }
 
     if (!types.isEmpty()) {
-      predicates.add(root.get("messageType").in(types));
+      predicates.add(root.get("message").get("type").in(types));
     }
 
     if (!headerCombos.isEmpty()) {
