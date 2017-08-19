@@ -15,7 +15,6 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
-import javax.persistence.EntityManager;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
@@ -33,8 +32,7 @@ public class HibernateReportRepositoryTest {
   @Rule
   public HibernateInMemoryDb.Reset reset = db.resetRule();
 
-  EntityManager entityManager = db.entityManager();
-  HibernateReportRepository repository = new HibernateReportRepository(entityManager);
+  HibernateReportRepository repository = new HibernateReportRepository(db.entityManager());
 
   @Test
   public void searchesReportsByHeadersInCombination() throws Throwable {
@@ -56,9 +54,7 @@ public class HibernateReportRepositoryTest {
             "error msg",
             "error detail"));
 
-    db.tx(() -> {
-      repository.save(report);
-    });
+    db.tx(() -> repository.save(report));
 
     List<Report> results = repository.search(
         Collections.emptySet(), Collections.emptySet(), Collections.singleton(
