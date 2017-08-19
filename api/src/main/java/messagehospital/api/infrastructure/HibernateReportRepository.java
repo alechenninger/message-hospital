@@ -15,21 +15,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import javax.persistence.EntityManager;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.JoinType;
-import javax.persistence.criteria.MapJoin;
-import javax.persistence.criteria.Path;
-import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.StringJoiner;
 import java.util.UUID;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 @Repository
@@ -69,70 +63,52 @@ public class HibernateReportRepository implements ReportRepository {
       return Stream.empty();
     }
 
-//    StringBuilder qstr = new StringBuilder();
-//    qstr.append("select distinct r from Report r");
-//
-//    if (!headerCombos.isEmpty()) {
-//      int comboIndex = 0;
-//
-//      for (Iterator<Map<String, String>> it = headerCombos.iterator(); it.hasNext(); comboIndex++) {
-//        Map<String, String> combo = it.next();
-//        qstr.append("left join r.message.headers h").append(comboIndex).append(" ")
-//            .append("where (h").append(comboIndex).append("['").append(comboIndex).append("] ")
-//            .append("= :header_value").append(comboIndex);
-//      }
-//    }
+    StringBuilder qstr = new StringBuilder();
+    qstr.append("select distinct r from Report r ");
 
-    Session session = entityManager.unwrap(Session.class);
+    StringJoiner joins = new StringJoiner(" ");
+    StringJoiner ands = new StringJoiner(" and ");
+    List<Consumer<Query<Report>>> queryConfigs = new ArrayList<>();
 
-    CriteriaBuilder builder = session.getCriteriaBuilder();
-    CriteriaQuery<Report> criteria = builder.createQuery(Report.class);
+    if (!headerCombos.isEmpty()) {
+      int headerIndex = 0;
+       StringJoiner comboOr = new StringJoiner(" or ");
 
-    Root<Report> root = criteria.from(Report.class);
-    criteria.select(root);
-    criteria.distinct(true);
+      for (Map<String, String> headerCombo : headerCombos) {
+        StringJoiner comboAnd = new StringJoiner(" and ");
 
-    List<Predicate> predicates = new ArrayList<>();
+        for (Iterator<Map.Entry<String, String>> iterator = headerCombo.entrySet().iterator();
+             iterator.hasNext();
+             headerIndex++) {
+          Map.Entry<String, String> e = iterator.next();
+
+          joins.add("left join r.message.headers h" + headerIndex);
+
+          comboAnd.add("KEY(h" + headerIndex + ") = '" + e.getKey() + "' and " +
+              "h" + headerIndex + " = '" + e.getValue() + "'");
+        }
+
+        comboOr.add("(" + comboAnd.toString() + ")");
+      }
+
+      ands.add("(" + comboOr + ")");
+    }
 
     if (!consumers.isEmpty()) {
-      predicates.add(root.get("consumer").in(consumers));
+      ands.add("consumer in :consumers");
+      queryConfigs.add(q -> q.setParameter("consumers", consumers));
     }
 
     if (!types.isEmpty()) {
-      predicates.add(root.get("message").get("type").in(types));
+      ands.add("message.type in :types");
+      queryConfigs.add(q -> q.setParameter("types", types));
     }
 
-    if (!headerCombos.isEmpty()) {
-      Predicate[] headerPredicates = new Predicate[headerCombos.size()];
-      int comboIndex = 0;
-
-      for (Iterator<Map<String, String>> it = headerCombos.iterator(); it.hasNext(); comboIndex++) {
-        Map<String, String> combo = it.next();
-        Predicate[] comboPredicates = new Predicate[combo.size()];
-        int headerIndex = 0;
-
-        for (Iterator<Map.Entry<String, String>> iterator = combo.entrySet().iterator();
-             iterator.hasNext();
-             headerIndex++) {
-          Map.Entry<String, String> entry = iterator.next();
-          MapJoin<Report, String, String> headerJoin = root.join("message").joinMap("headers", JoinType.LEFT);
-          comboPredicates[headerIndex] = builder.and(
-              builder.equal(headerJoin.key(), entry.getKey()),
-              builder.equal(headerJoin.value(), entry.getValue()));
-        }
-
-        headerPredicates[comboIndex] = builder.and(comboPredicates);
-      }
-
-      predicates.add(builder.or(headerPredicates));
-    }
-
-    criteria.where(predicates.toArray(new Predicate[predicates.size()]));
-
-    Query<Report> query = session.createQuery(criteria);
-
-//    Session session = entityManager.unwrap(Session.class);
-//    Query<Report> query = session.createQuery(qstr.toString(), Report.class);
+    Session session = entityManager.unwrap(Session.class);
+    Query<Report> query = session.createQuery(
+        qstr.append(joins).append(" where ").append(ands).toString(),
+        Report.class);
+    queryConfigs.forEach(p -> p.accept(query));
     query.setMaxResults(max);
     query.setFirstResult(index);
 
