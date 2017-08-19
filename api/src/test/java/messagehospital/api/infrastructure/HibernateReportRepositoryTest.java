@@ -5,7 +5,6 @@ import static org.junit.Assert.assertThat;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
-import messagehospital.api.domain.CorrelationId;
 import messagehospital.api.domain.MessageType;
 import messagehospital.api.domain.Report;
 import messagehospital.api.domain.ServiceName;
@@ -21,9 +20,7 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 

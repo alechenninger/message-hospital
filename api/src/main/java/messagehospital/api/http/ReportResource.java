@@ -79,7 +79,8 @@ public class ReportResource {
   public ResponseEntity<ReportIdDto> report(@RequestBody ReportRequest request) throws UnsupportedEncodingException {
     ReportId id = repository.nextReportId();
 
-    Report report = new Report(id,
+    Report report = new Report(
+        id,
         request.timestamp.toInstant(),
         new ServiceName(request.consumer),
         new Report.Message(
