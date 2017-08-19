@@ -53,17 +53,17 @@ public class HibernateReportRepositoryTest {
             "error msg",
             "error detail"));
 
-    List<Report> results = db.tx(() -> {
+    db.tx(() -> {
       repository.save(report);
-
-      return repository.search(
-          Collections.emptySet(), Collections.emptySet(), Collections.singleton(
-              new HashMap<String, String>() {{
-                put("header1", "value1");
-                put("header2", "value2");
-              }}),
-          0, 10).collect(Collectors.toList());
     });
+
+    List<Report> results = repository.search(
+        Collections.emptySet(), Collections.emptySet(), Collections.singleton(
+            new HashMap<String, String>() {{
+              put("header1", "value1");
+              put("header2", "value2");
+            }}),
+        0, 10).collect(Collectors.toList());
 
     assertEquals(1, results.size());
     assertEquals(report.id(), results.get(0).id());

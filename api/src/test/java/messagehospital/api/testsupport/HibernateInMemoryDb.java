@@ -80,6 +80,8 @@ public class HibernateInMemoryDb extends ExternalResource {
         new HashMap<String, String>() {{
           put("hibernate.dialect", "org.hibernate.dialect.HSQLDialect");
           put("hibernate.hbm2ddl.auto", "create-drop");
+          put("hibernate.show_sql", "true");
+          put("hibernate.format_sql", "true");
         }});
     entityManager = entityManagerFactory.createEntityManager();
   }

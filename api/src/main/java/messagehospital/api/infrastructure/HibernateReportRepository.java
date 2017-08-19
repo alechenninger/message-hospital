@@ -24,6 +24,7 @@ import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -68,7 +69,22 @@ public class HibernateReportRepository implements ReportRepository {
       return Stream.empty();
     }
 
+//    StringBuilder qstr = new StringBuilder();
+//    qstr.append("select distinct r from Report r");
+//
+//    if (!headerCombos.isEmpty()) {
+//      int comboIndex = 0;
+//
+//      for (Iterator<Map<String, String>> it = headerCombos.iterator(); it.hasNext(); comboIndex++) {
+//        Map<String, String> combo = it.next();
+//        qstr.append("left join r.message.headers h").append(comboIndex).append(" ")
+//            .append("where (h").append(comboIndex).append("['").append(comboIndex).append("] ")
+//            .append("= :header_value").append(comboIndex);
+//      }
+//    }
+
     Session session = entityManager.unwrap(Session.class);
+
     CriteriaBuilder builder = session.getCriteriaBuilder();
     CriteriaQuery<Report> criteria = builder.createQuery(Report.class);
 
@@ -99,7 +115,7 @@ public class HibernateReportRepository implements ReportRepository {
              iterator.hasNext();
              headerIndex++) {
           Map.Entry<String, String> entry = iterator.next();
-          MapJoin<Report, String, String> headerJoin = root.joinMap("headers", JoinType.LEFT);
+          MapJoin<Report, String, String> headerJoin = root.join("message").joinMap("headers", JoinType.LEFT);
           comboPredicates[headerIndex] = builder.and(
               builder.equal(headerJoin.key(), entry.getKey()),
               builder.equal(headerJoin.value(), entry.getValue()));
@@ -114,6 +130,9 @@ public class HibernateReportRepository implements ReportRepository {
     criteria.where(predicates.toArray(new Predicate[predicates.size()]));
 
     Query<Report> query = session.createQuery(criteria);
+
+//    Session session = entityManager.unwrap(Session.class);
+//    Query<Report> query = session.createQuery(qstr.toString(), Report.class);
     query.setMaxResults(max);
     query.setFirstResult(index);
 
