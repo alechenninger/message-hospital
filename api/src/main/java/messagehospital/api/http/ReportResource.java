@@ -1,13 +1,11 @@
 package messagehospital.api.http;
 
-import messagehospital.api.domain.CorrelationId;
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import messagehospital.api.domain.MessageType;
 import messagehospital.api.domain.Report;
 import messagehospital.api.domain.ReportId;
 import messagehospital.api.domain.ReportRepository;
 import messagehospital.api.domain.ServiceName;
-
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +21,6 @@ import java.io.UnsupportedEncodingException;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -52,7 +49,7 @@ public class ReportResource {
 
   @PostMapping("/search")
   public ResponseEntity<Stream<ReportDto>> search(@RequestBody SearchRequest request) {
-    Set<ServiceName> producers = request.producers.stream()
+    Set<ServiceName> consumers = request.consumers.stream()
         .map(ServiceName::new)
         .collect(Collectors.toSet());
 
@@ -65,7 +62,7 @@ public class ReportResource {
         : new HashSet<>(request.headers);
 
     return ResponseEntity.ok(repository
-        .search(producers, messageTypes, headers, request.index, request.max)
+        .search(consumers, messageTypes, headers, request.index, request.max)
         .map(r -> new ReportDto(r, zone)));
   }
 
@@ -76,7 +73,7 @@ public class ReportResource {
 
     Report report = new Report(id,
         request.timestamp.toInstant(),
-        new ServiceName(request.system),
+        new ServiceName(request.consumer),
         new Report.Message(
             new MessageType(request.messageType),
             new Report.Message.Data(request.dataFormat, request.data.getBytes("UTF-8")),
@@ -98,7 +95,7 @@ public class ReportResource {
     public String data;
     public Map<String, String> headers;
     public String dataFormat;
-    public String system;
+    public String consumer;
     public Collection<String> errorTypes;
     public String errorMessage;
 
@@ -127,8 +124,8 @@ public class ReportResource {
       return this;
     }
 
-    public ReportRequest system(String system) {
-      this.system = system;
+    public ReportRequest consumer(String consumer) {
+      this.consumer = consumer;
       return this;
     }
 
@@ -157,7 +154,7 @@ public class ReportResource {
           ", data='" + data + '\'' +
           ", headers=" + headers +
           ", dataFormat='" + dataFormat + '\'' +
-          ", system='" + system + '\'' +
+          ", consumer='" + consumer + '\'' +
           ", errorTypes=" + errorTypes +
           ", errorMessage='" + errorMessage + '\'' +
           ", errorDetail='" + errorDetail + '\'' +
@@ -167,14 +164,14 @@ public class ReportResource {
 
   @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
   public static class SearchRequest {
-    public Collection<String> producers;
+    public Collection<String> consumers;
     public Collection<String> messageTypes;
     public Collection<Map<String, String>> headers;
     public int index = 0;
     public int max = 20;
 
-    public SearchRequest producers(Collection<String> producers) {
-      this.producers = producers;
+    public SearchRequest consumers(Collection<String> producers) {
+      this.consumers = producers;
       return this;
     }
 
@@ -203,7 +200,7 @@ public class ReportResource {
   public static class ReportDto {
     public String id;
     public OffsetDateTime timestamp;
-    public String system;
+    public String consumer;
     public String messageType;
     public String dataFormat;
     public String data;
@@ -217,7 +214,7 @@ public class ReportResource {
     ReportDto(Report report, ZoneOffset zone) {
       id = report.id().toString();
       timestamp = report.timestamp().atOffset(zone);
-      system = Objects.toString(report.consumer(), null);
+      consumer = Objects.toString(report.consumer(), null);
       messageType = Objects.toString(report.message().type(), null);
       dataFormat = Objects.toString(report.message().data().mimeType(), null);
       data = report.message().data().dataAsUtf8();
@@ -232,7 +229,7 @@ public class ReportResource {
       return "ReportDto{" +
           "id='" + id + '\'' +
           ", timestamp=" + timestamp +
-          ", system='" + system + '\'' +
+          ", consumer='" + consumer + '\'' +
           ", messageType='" + messageType + '\'' +
           ", dataFormat='" + dataFormat + '\'' +
           ", data='" + data + '\'' +

@@ -40,7 +40,7 @@ public class DeferredReportRepository implements ReportRepository {
   }
 
   @Override
-  public Stream<Report> search(Set<ServiceName> producers, Set<MessageType> types, Set<Map<String, String>> headers, int index, int max) {
+  public Stream<Report> search(Set<ServiceName> consumers, Set<MessageType> types, Set<Map<String, String>> headers, int index, int max) {
     return null;
   }
 

@@ -31,6 +31,7 @@ public class ApplicationTest {
   public void reportAndSearch() {
     ResponseEntity<ReportResource.ReportDto> response = restTemplate.postForEntity("/reports",
         new ReportResource.ReportRequest()
+            .consumer("test")
             .data("<xml></xml>")
             .dataFormat("application/xml")
             .timestamp(OffsetDateTime.now())
@@ -48,7 +49,7 @@ public class ApplicationTest {
 
     ResponseEntity<List> searchResponse = restTemplate.postForEntity("/reports/search",
         new ReportResource.SearchRequest()
-            .producers(Arrays.asList("test"))
+            .consumers(Arrays.asList("test"))
             .messageTypes(Arrays.asList("customer"))
             .headers(Collections.singleton(Stream.<String[]>of(
                 new String[]{"test1", "value1"})
@@ -60,7 +61,7 @@ public class ApplicationTest {
 
     searchResponse = restTemplate.postForEntity("/reports/search",
         new ReportResource.SearchRequest()
-            .producers(Arrays.asList("test"))
+            .consumers(Arrays.asList("test"))
             .messageTypes(Arrays.asList("customer"))
             .headers(Collections.singleton(Stream.<String[]>of(
                 new String[]{"test1", "wrong"})

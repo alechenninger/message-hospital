@@ -95,12 +95,12 @@ public class HibernateReportRepository implements ReportRepository {
     }
 
     if (!consumers.isEmpty()) {
-      ands.add("consumer in :consumers");
+      ands.add("r.consumer in :consumers");
       queryConfigs.add(q -> q.setParameter("consumers", consumers));
     }
 
     if (!types.isEmpty()) {
-      ands.add("message.type in :types");
+      ands.add("r.message.type in :types");
       queryConfigs.add(q -> q.setParameter("types", types));
     }
 

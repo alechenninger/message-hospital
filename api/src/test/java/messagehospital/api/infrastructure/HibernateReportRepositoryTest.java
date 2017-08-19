@@ -2,6 +2,8 @@ package messagehospital.api.infrastructure;
 
 import static org.junit.Assert.assertEquals;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Sets;
 import messagehospital.api.domain.CorrelationId;
 import messagehospital.api.domain.MessageType;
 import messagehospital.api.domain.Report;
@@ -22,6 +24,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@SuppressWarnings({"ArraysAsListWithZeroOrOneArgument", "unchecked"})
 public class HibernateReportRepositoryTest {
 
   @ClassRule
@@ -163,5 +166,133 @@ public class HibernateReportRepositoryTest {
     assertEquals(
         Stream.of(report1.id(), report2.id()).collect(Collectors.toSet()),
         results.stream().map(Report::id).collect(Collectors.toSet()));
+  }
+
+  @Test
+  public void findsReportsByMatchingConsumer() throws Throwable {
+    Report report = new Report(
+        repository.nextReportId(),
+        Instant.now(),
+        new ServiceName("sysA"),
+        new Report.Message(
+            new MessageType("user"),
+            new Report.Message.Data(
+                "application/xml",
+                "<message></message>".getBytes()),
+            new HashMap<String, String>() {{
+              put("header1", "value1");
+              put("header2", "value2");
+            }}),
+        new Report.Exception(
+            Arrays.asList("IOException"),
+            "error msg",
+            "error detail"));
+
+    db.tx(() -> repository.save(report));
+
+    List<Report> bySysA = repository.search(
+        Sets.newHashSet(new ServiceName("sysA")),
+        Collections.emptySet(),
+        Collections.emptySet(),
+        0, 10)
+        .collect(Collectors.toList());
+
+    assertEquals(1, bySysA.size());
+  }
+
+  @Test
+  public void doesNotReturnReportsWhichDoNotMatchAnyConsumers() throws Throwable {
+    Report report = new Report(
+        repository.nextReportId(),
+        Instant.now(),
+        new ServiceName("sysA"),
+        new Report.Message(
+            new MessageType("user"),
+            new Report.Message.Data(
+                "application/xml",
+                "<message></message>".getBytes()),
+            new HashMap<String, String>() {{
+              put("header1", "value1");
+              put("header2", "value2");
+            }}),
+        new Report.Exception(
+            Arrays.asList("IOException"),
+            "error msg",
+            "error detail"));
+
+    db.tx(() -> repository.save(report));
+
+    List<Report> bySysBOrC = repository.search(
+        Sets.newHashSet(new ServiceName("sysB"), new ServiceName("sysC")),
+        Collections.emptySet(),
+        Collections.emptySet(),
+        0, 10)
+        .collect(Collectors.toList());
+
+    assertEquals(0, bySysBOrC.size());
+  }
+
+  @Test
+  public void searchesReportsByMessageType() throws Throwable {
+    Report report = new Report(
+        repository.nextReportId(),
+        Instant.now(),
+        new ServiceName("sysA"),
+        new Report.Message(
+            new MessageType("user"),
+            new Report.Message.Data(
+                "application/xml",
+                "<message></message>".getBytes()),
+            new HashMap<String, String>() {{
+              put("header1", "value1");
+              put("header2", "value2");
+            }}),
+        new Report.Exception(
+            Arrays.asList("IOException"),
+            "error msg",
+            "error detail"));
+
+    db.tx(() -> repository.save(report));
+
+    List<Report> bySysA = repository.search(
+        Collections.emptySet(),
+        Sets.newHashSet(new MessageType("user")),
+        Collections.emptySet(),
+        0, 10)
+        .collect(Collectors.toList());
+
+    assertEquals(1, bySysA.size());
+  }
+
+  @Test
+  public void searchesReportsByAllOfMessageTypeConsumerServicesAndHeaders() throws Throwable {
+    Report report = new Report(
+        repository.nextReportId(),
+        Instant.now(),
+        new ServiceName("sysA"),
+        new Report.Message(
+            new MessageType("user"),
+            new Report.Message.Data(
+                "application/xml",
+                "<message></message>".getBytes()),
+            new HashMap<String, String>() {{
+              put("header1", "value1");
+              put("header2", "value2");
+            }}),
+        new Report.Exception(
+            Arrays.asList("IOException"),
+            "error msg",
+            "error detail"));
+
+    db.tx(() -> repository.save(report));
+
+    List<Report> bySysA = repository.search(
+        Sets.newHashSet(new ServiceName("sysA")),
+        Sets.newHashSet(new MessageType("user")),
+        Sets.newHashSet(ImmutableMap.of("header1", "value1", "header2", "value2")),
+        0, 10)
+        .collect(Collectors.toList());
+
+    assertEquals(1, bySysA.size());
   }
 }
