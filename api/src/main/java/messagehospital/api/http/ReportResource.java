@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -45,6 +46,13 @@ public class ReportResource {
   public ResponseEntity<Stream<ReportDto>> getAll() {
     return ResponseEntity.ok(
         repository.allReports().map(r -> new ReportDto(r, zone)));
+  }
+
+  @GetMapping("/{id}")
+  public ResponseEntity<ReportDto> getById(@PathVariable("id") String id) {
+    return repository.reportById(new ReportId(id))
+        .map(r -> ResponseEntity.ok(new ReportDto(r, zone)))
+        .orElse(ResponseEntity.notFound().build());
   }
 
   @PostMapping("/search")

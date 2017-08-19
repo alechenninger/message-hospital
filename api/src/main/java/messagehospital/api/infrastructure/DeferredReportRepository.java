@@ -1,6 +1,5 @@
 package messagehospital.api.infrastructure;
 
-import messagehospital.api.domain.CorrelationId;
 import messagehospital.api.domain.MessageType;
 import messagehospital.api.domain.Report;
 import messagehospital.api.domain.ReportId;
@@ -9,6 +8,7 @@ import messagehospital.api.domain.ServiceName;
 
 import java.time.Instant;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -30,11 +30,6 @@ public class DeferredReportRepository implements ReportRepository {
   }
 
   @Override
-  public Stream<Report> reportsByCorrelationId(CorrelationId id) {
-    return null;
-  }
-
-  @Override
   public Stream<Report> allReports() {
     return null;
   }
@@ -45,7 +40,7 @@ public class DeferredReportRepository implements ReportRepository {
   }
 
   @Override
-  public Set<String> headerNamesByType(MessageType type) {
+  public Stream<String> headerNamesByType(MessageType type) {
     return null;
   }
 
@@ -55,7 +50,17 @@ public class DeferredReportRepository implements ReportRepository {
   }
 
   @Override
+  public void saveAll(Stream<Report> reports) {
+
+  }
+
+  @Override
   public void removeReportsOlderThan(Instant time) {
 
+  }
+
+  @Override
+  public Optional<Report> reportById(ReportId id) {
+    return null;
   }
 }

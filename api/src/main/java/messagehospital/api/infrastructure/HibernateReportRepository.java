@@ -1,6 +1,5 @@
 package messagehospital.api.infrastructure;
 
-import messagehospital.api.domain.CorrelationId;
 import messagehospital.api.domain.MessageType;
 import messagehospital.api.domain.Report;
 import messagehospital.api.domain.ReportId;
@@ -20,10 +19,12 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.StringJoiner;
 import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Repository
@@ -43,11 +44,8 @@ public class HibernateReportRepository implements ReportRepository {
   }
 
   @Override
-  public Stream<Report> reportsByCorrelationId(CorrelationId id) {
-    Session session = entityManager.unwrap(Session.class);
-    return session.createQuery("select r from Report r where r.correlationId = :id", Report.class)
-        .setParameter("id", id)
-        .stream();
+  public Optional<Report> reportById(ReportId id) {
+    return Optional.ofNullable(entityManager.find(Report.class, id));
   }
 
   @Override
@@ -116,13 +114,21 @@ public class HibernateReportRepository implements ReportRepository {
   }
 
   @Override
-  public Set<String> headerNamesByType(MessageType type) {
-    return null;
+  public Stream<String> headerNamesByType(MessageType type) {
+    return entityManager.unwrap(Session.class)
+        .createQuery("select distinct KEY(r.message.headers) from Report r " +
+                "where r.message.type = '" + type.toString() + "'", String.class)
+        .stream();
   }
 
   @Override
   public void save(Report report) {
     entityManager.persist(report);
+  }
+
+  @Override
+  public void saveAll(Stream<Report> reports) {
+    reports.forEach(this::save);
   }
 
   @Override

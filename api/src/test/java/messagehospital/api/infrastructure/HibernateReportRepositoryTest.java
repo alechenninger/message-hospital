@@ -1,6 +1,7 @@
 package messagehospital.api.infrastructure;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
@@ -10,6 +11,7 @@ import messagehospital.api.domain.Report;
 import messagehospital.api.domain.ServiceName;
 import messagehospital.api.testsupport.HibernateInMemoryDb;
 
+import org.hamcrest.Matchers;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -21,6 +23,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -294,5 +297,68 @@ public class HibernateReportRepositoryTest {
         .collect(Collectors.toList());
 
     assertEquals(1, bySysA.size());
+  }
+
+  @Test
+  public void retrievesHeaderNamesByMessageType() throws Throwable {
+    db.tx(() -> repository.saveAll(Stream.of(
+        new Report(
+            repository.nextReportId(),
+            Instant.now(),
+            new ServiceName("sysA"),
+            new Report.Message(
+                new MessageType("user"),
+                new Report.Message.Data(
+                    "application/xml",
+                    "<message></message>".getBytes()),
+                new HashMap<String, String>() {{
+                  put("header1", "value1");
+                  put("header2", "value2");
+                }}),
+            new Report.Exception(
+                Arrays.asList("IOException"),
+                "error msg",
+                "error detail")),
+        new Report(
+            repository.nextReportId(),
+            Instant.now(),
+            new ServiceName("sysA"),
+            new Report.Message(
+                new MessageType("user"),
+                new Report.Message.Data(
+                    "application/xml",
+                    "<message></message>".getBytes()),
+                new HashMap<String, String>() {{
+                  put("header1", "value1");
+                  put("header3", "value3");
+                }}),
+            new Report.Exception(
+                Arrays.asList("IOException"),
+                "error msg",
+                "error detail")),
+        new Report(
+            repository.nextReportId(),
+            Instant.now(),
+            new ServiceName("sysA"),
+            new Report.Message(
+                new MessageType("order"),
+                new Report.Message.Data(
+                    "application/xml",
+                    "<message></message>".getBytes()),
+                new HashMap<String, String>() {{
+                  put("header4", "value1");
+                  put("header5", "value3");
+                }}),
+            new Report.Exception(
+                Arrays.asList("IOException"),
+                "error msg",
+                "error detail"))
+        )));
+
+    try (Stream<String> headerNames = repository.headerNamesByType(new MessageType("user"))) {
+      assertThat(
+          headerNames.collect(Collectors.toList()),
+          Matchers.containsInAnyOrder("header1", "header2", "header3"));
+    }
   }
 }

@@ -1,6 +1,7 @@
 package messagehospital.api;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 import messagehospital.api.http.ReportResource;
 import org.junit.Test;
@@ -8,6 +9,7 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -15,6 +17,7 @@ import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -55,9 +58,10 @@ public class ApplicationTest {
                 new String[]{"test1", "value1"})
                 .collect(Collectors.toMap(h -> h[0], h -> h[1])))),
         List.class);
-    List<ReportResource.ReportDto> reports = searchResponse.getBody();
+    List<Map> reports = searchResponse.getBody();
 
     assertEquals(1, reports.size());
+    String reportId = (String) reports.get(0).get("id");
 
     searchResponse = restTemplate.postForEntity("/reports/search",
         new ReportResource.SearchRequest()
@@ -70,5 +74,16 @@ public class ApplicationTest {
     reports = searchResponse.getBody();
 
     assertEquals(0, reports.size());
+
+    ReportResource.ReportDto byId =
+        restTemplate.getForEntity("/reports/" + reportId, ReportResource.ReportDto.class)
+            .getBody();
+
+    assertNotNull(byId);
+    assertEquals(reportId, byId.id);
+
+    ResponseEntity<ReportResource.ReportDto> wrongId =
+        restTemplate.getForEntity("/reports/foo", ReportResource.ReportDto.class);
+    assertEquals(HttpStatus.NOT_FOUND, wrongId.getStatusCode());
   }
 }
