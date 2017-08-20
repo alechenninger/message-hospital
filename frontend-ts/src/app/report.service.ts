@@ -6,7 +6,7 @@ import { Report } from './report';
 export class ReportService {
   getAllReports(): Promise<Report[]> {
     return Promise.resolve([{
-      id: "foo",
+      id: "314613a3-4d8d-483c-bbae-8987272f4d87",
       consumer: "user_service",
       data: "<user></user>",
       messageType: "user",

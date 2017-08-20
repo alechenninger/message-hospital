@@ -19,6 +19,8 @@
       "testTsconfig": "tsconfig.spec.json",
       "prefix": "app",
       "styles": [
+        "../node_modules/patternfly/dist/css/patternfly.min.css",
+        "../node_modules/patternfly/dist/css/patternfly-additions.min.css",
         "styles.css"
       ],
       "scripts": [],

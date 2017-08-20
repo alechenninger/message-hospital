@@ -1,10 +1,58 @@
 <!--The content below is only a placeholder and can be replaced.-->
-<div style="text-align:center">
-  <h1>
-    Welcome to {{title}}!
-  </h1>
+<div class="padding-15">
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="form-group">
+        <pfng-list [items]="reports"
+                   [config]="listConfig"
+                   [itemTemplate]="itemTemplate"
+                   [actionTemplate]="actionTemplate">
+          <ng-template #itemTemplate 
+                       let-report="item">
+              <div class="list-pf-content-wrapper">
+                <div class="list-pf-main-content">
+                  <div class="list-pf-title">
+                    {{ report.consumer }} : {{ report.errorMessage }} : {{report.messageType}}
+                  </div>
+                  <div class="list-pf-description">
+                    {{ report.data }}
+                  </div>
+                </div>
+                <div class="list-pf-additional-content">
+                  <div>
+                    <span class="pficon pficon-screen"></span>
+                    <strong>4</strong> Hosts
+                  </div>
+                  <div>
+                    <span class="pficon pficon-cluster"></span>
+                    <strong>2</strong> Clusters
+                  </div>
+                  <div>
+                    <span class="pficon pficon-container-node"></span>
+                    <strong>1</strong> Nodes
+                  </div>
+                  <div>
+                    <span class="pficon pficon-image"></span>
+                    <strong>3</strong> Images
+                  </div>
+                </div>
+              </div>
+          </ng-template>
+          <ng-template #actionTemplate 
+                       let-report="item" 
+                       let-index="index">
+              <pfng-action class="list-pf-actions"
+                           [config]="getActionConfig(report, actionButtonTemplate, startButtonTemplate)">
+                <ng-template #actionButtonTemplate let-action="action">
+                  <span class="fa fa-plus">&nbsp;</span>{{action.title}}
+                </ng-template>
+                <ng-template #startButtonTemplate let-action="action">
+                  {{"Starting"}}
+                </ng-template>
+              </pfng-action>
+            </ng-template>
+        </pfng-list>
+      </div>
+    </div>
+  </div>
 </div>
-<ul>
-  <li *ngFor="let report of reports">{{report.id}}: {{report.data}}</li>
-</ul>
-
